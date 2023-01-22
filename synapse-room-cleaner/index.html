@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Anton Yakymenko">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <script defer src="alpine.min.js"></script>
+        <script src="index.js"></script>
+        <link rel="stylesheet" type="text/css" href="site.css">
+        <title>Synapse Room Cleaner</title>
+	</head>
+	<body>
+        <div x-data="room_data">
+            <div class="separated">
+                <div class="title">Synapse Room Cleaner</div>
+                <div class="author">by yaky.dev</div>
+                <div class="source"><a href="https://github.com/yaky-dev/synapse-room-cleaner">Source on GitHub</a></div>
+            </div>
+            <div class="separated">
+                <div class="control">
+                    <div class="input-label" >Synapse homeserver URL</div>
+                    <input x-model="server" x-on:change="localStorage.setItem('server',$event.target.value)" type="text">
+                </div>
+                <div class="control">
+                    <div class="input-label">Access token (<a href="https://matrix-org.github.io/synapse/latest/usage/administration/admin_api/index.html#authenticate-as-a-server-admin">help</a>)</div>
+                    <input x-model="token" x-on:change="localStorage.setItem('token',$event.target.value)" type="password">
+                </div>
+            </div>
+            <div>
+                <div class="control">
+                    <button x-on:click="get_rooms()">List Rooms</button>
+                </div>
+                <div class="control">
+                    <span>Total rooms:</span>
+                    <span x-text="total_rooms"></span>
+                </div>
+            </div>
+            <div class="table-control" x-show="rooms.length > 0">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Creator</th>
+                            <th>Members</th>
+                            <th>Local Members</th>
+                            <th>Local Members List</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="room in rooms">
+                            <tr>
+                                <td x-text="room.room_id"></td>
+                                <td x-text="room.name"></td>
+                                <td x-text="room.creator"></td>
+                                <td x-text="room.joined_members"></td>
+                                <td x-text="room.joined_local_members"></td>
+                                <td>
+                                    <button x-on:click="get_room_members(room.room_id)" x-show="!room.members && !room.deleted">List Members</button>
+                                    <ul x-show="room.members">
+                                        <template x-for="member in room.members || []">
+                                        <li x-text="member"></li>
+                                        </template>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <button x-on:click="delete_room(room.room_id, room.force_delete)" x-show="!room.deleted" x-text="room.force_delete ? 'Force Delete' : 'Delete'"></button>
+                                    <span x-show="room.deleted">DELETED</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div class="message-box" x-show="message">
+                <div>
+                    <span x-text="message"></span>
+                </div>
+                <div>
+                    <button x-on:click="message = ''">Close</button>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,128 @@
+:root {
+    --color-bg: #15191e;
+    --color-button: #0dbd8b;
+    --color-text: #ffffff;
+    --color-link: #238cf5;
+    --font-family: Arial, Helvetica, sans-serif;
+    --color-border: #e7e7e751;
+    --color-message: #1f242a;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: 14px;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    margin-top: 0;
+}
+
+a {
+    color: var(--color-link);
+}
+
+.title {
+    font-size: 20px;
+    font-weight: 600;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.author {
+    font-size: 10px;
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.source {
+    float: right;
+}
+
+.control {
+    display: inline-block;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.input-label {
+    display: inline-block;
+    min-width: 280px;
+    text-align: right;
+}
+
+input {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    color: var(--color-text);
+    min-width: 280px;
+    background-color: #00000000;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 6px;
+}
+
+button {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+    border: 0;
+    border-radius: 8px;
+    padding: 8px;
+    margin: 4px;
+    background-color: var(--color-button);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.table-control {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    width: 100%;
+    overflow-x: scroll;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table tr:nth-child(odd) {
+    background-color: #00000040;
+}
+
+tr {
+    min-height: 48px;
+}
+
+th, td {
+    padding: 2px 4px;
+    text-align: left;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.message-box {
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    box-sizing: border-box;
+    width: 80%;
+    margin: 0;
+    padding: 8px;
+    background-color: var(--color-message);
+    color: var(--color-text);
+    box-shadow: 8px 8px #000;
+    border-radius: 8px;
+}
+
+.message-box>div {
+    padding: 8px;
+}
+
+.separated {
+    border-bottom: 1px solid #888;
+    padding: 8px 0;
+}
