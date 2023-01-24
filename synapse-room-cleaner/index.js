@@ -9,7 +9,7 @@ document.addEventListener('alpine:init', () => {
         
         get_rooms() {
             if (!this.server) {
-                this.message = 'Homeserver is required';
+                this.message = 'Homeserver URL is required';
                 return;
             }
             if (!this.token) {

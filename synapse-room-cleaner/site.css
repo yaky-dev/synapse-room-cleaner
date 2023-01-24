@@ -45,7 +45,7 @@ a {
 
 .input-label {
     display: inline-block;
-    min-width: 280px;
+    min-width: 290px;
     text-align: right;
 }
 
@@ -66,8 +66,8 @@ button {
     font-weight: 600;
     color: var(--color-text);
     border: 0;
-    border-radius: 8px;
-    padding: 8px;
+    border-radius: 4px;
+    padding: 2px 8px;
     margin: 4px;
     background-color: var(--color-button);
     white-space: nowrap;
