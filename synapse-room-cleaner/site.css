@@ -1,23 +1,37 @@
 :root {
-    --color-bg: #15191e;
-    --color-button: #0dbd8b;
-    --color-text: #ffffff;
-    --color-link: #238cf5;
-    --font-family: Arial, Helvetica, sans-serif;
-    --color-border: #e7e7e751;
-    --color-message: #1f242a;
+	--color-bg: #080400;
+    --color-bg-alt: #120600;
+	--color-dark: #820;
+	--color-main: #c40;
+	--color-text: #fea;
+	--color-link: #f82;
+	--color-high: #fa4;
 }
 
 body {
-    font-family: var(--font-family);
+    font-family: sans-serif;
     font-size: 14px;
     background-color: var(--color-bg);
     color: var(--color-text);
     margin-top: 0;
 }
 
-a {
-    color: var(--color-link);
+a, a:visited
+{
+	color: var(--color-link);
+	text-decoration: none;
+	border-radius: 2px;
+}
+
+a:hover, a:active
+{
+	color: var(--color-high);
+}
+
+a:focus
+{
+	color: var(--color-high);
+	outline: 1px solid var(--color-main);
 }
 
 .title {
@@ -54,24 +68,40 @@ input {
     font-size: 14px;
     color: var(--color-text);
     min-width: 280px;
-    background-color: #00000000;
-    border: 1px solid var(--color-border);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-dark);
     border-radius: 4px;
     padding: 6px;
 }
 
+input:active, input:focus {
+    border: 1px solid var(--color-main);
+}
+
+input:focus {
+	outline: 1px solid var(--color-main);
+}
+
 button {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 15px;
     font-weight: 600;
+    font-size: 16px;
     color: var(--color-text);
     border: 0;
     border-radius: 4px;
-    padding: 2px 8px;
+    padding: 4px 8px;
     margin: 4px;
-    background-color: var(--color-button);
+    background-color: var(--color-dark);
     white-space: nowrap;
     cursor: pointer;
+}
+
+button:hover, button:active {
+    background-color: var(--color-main);
+}
+
+button:focus {
+    background-color: var(--color-main);
+	outline: 1px solid var(--color-main);
 }
 
 .table-control {
@@ -86,7 +116,7 @@ table {
 }
 
 table tr:nth-child(odd) {
-    background-color: #00000040;
+    background-color: var(--color-bg-alt);
 }
 
 tr {
@@ -112,10 +142,11 @@ ul {
     width: 80%;
     margin: 0;
     padding: 8px;
-    background-color: var(--color-message);
+    background-color: var(--color-bg);
     color: var(--color-text);
-    box-shadow: 8px 8px #000;
+    border: 1px solid var(--color-dark);
     border-radius: 8px;
+    outline: 4px solid var(--color-bg);
 }
 
 .message-box>div {
@@ -123,6 +154,6 @@ ul {
 }
 
 .separated {
-    border-bottom: 1px solid #888;
+    border-bottom: 1px solid var(--color-dark);
     padding: 8px 0;
 }
