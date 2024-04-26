@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='utf-8'>
+		<meta name='author' content='Anton Yaky'>
+		<meta name='viewport' content='width=device-width, initial-scale=1'>
+		<title>Synapse Room Cleaner</title>
+		<script>
+			window.onload = (event) => {
+				_el('homeserver').value = localStorage.getItem('homeserver');
+				_el('access_token').value = localStorage.getItem('access_token');
+			}
+			function _el(id) {
+				return document.getElementById(id);
+			}
+			function _val(id) {
+				return document.getElementById(id).value;
+			}
+			function credentialsSave() {
+				let homeserver = _val('homeserver');
+				localStorage.setItem('homeserver', homeserver);
+				let access_token = _val('access_token');
+				localStorage.setItem('access_token', access_token);
+				alert('Credentials saved to local storage. They will be automatically set next time this page is loaded.');
+			}
+			function credentialsClear() {
+				_el('homeserver').value = '';
+				_el('access_token').value = '';
+				localStorage.removeItem('homeserver');
+				localStorage.removeItem('access_token');
+				alert('Credentials cleared.');
+			}
+			function roomsList(rooms_from) {
+				const homeserver = _val('homeserver');
+				const access_token = _val('access_token');
+				if (!homeserver) {
+					alert('Homeserver URL is required.');
+					return;
+				}
+				if (!access_token) {
+					alert('Access token is required.');
+					return;
+				}
+				let url = `${homeserver}/_synapse/admin/v1/rooms?from=${rooms_from}&limit=10`;
+				const search_term = _val('search_term');
+				if (search_term) {
+					url += `&search_term=${search_term}`
+				}
+				fetch(url, {
+					method: 'GET',
+					headers: { 'Authorization': `Bearer ${access_token}` }
+				})
+				.then((response) => {
+					if (!response.ok)
+						throw new Error(`${response.status} ${response.statusText}`);
+					return response.json();
+				})
+				.then((data) => {
+					_el('rooms_total').innerText = `Total rooms: ${data.total_rooms}`;
+					_el('rooms_prev').style.display = "inline-block";
+					_el('rooms_next').style.display = "inline-block";
+					if (data.prev_batch != undefined) {
+						_el('rooms_prev').setAttribute('onclick', `roomsList(${data.prev_batch})`)
+						_el('rooms_prev').disabled = false;
+					} else {
+						_el('rooms_prev').disabled = true;
+					}
+					if (data.next_batch != undefined) {
+						_el('rooms_next').setAttribute('onclick', `roomsList(${data.next_batch})`)
+						_el('rooms_next').disabled = false;
+					} else {
+						_el('rooms_next').disabled = true;
+					}
+					let tableHtml = 
+`				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+						<th class='centered'>Encrypted</th>
+						<th>Creator</th>
+						<th class='centered'>Total Member Count</th>
+						<th class='centered'>Local Member Count</th>
+						<th>Local Member List</th>
+						<th class='centered'></th>
+					</tr>
+				</thead>
+				<tbody>`;
+					for (let i = 0; i < data.rooms.length; i++) {
+						const room = data.rooms[i]; 
+						tableHtml +=
+`					<tr>
+						<td>${room.room_id}</td>
+						<td>${room.name ? room.name : ''}</td>
+						<td>${room.encryption ? 'Y' : 'N'}</td>
+						<td>${room.creator}</td>
+						<td class='centered'>${room.joined_members}</td>
+						<td class='centered'>${room.joined_local_members}</td>
+						<td id='room_members_${i}'><button onclick='roomGetMembers(${i},"${room.room_id}")'>Get Members</button></td>
+						<td id='room_delete_state_${i}' class='centered'><button id='room_delete_${i}' onclick='roomDelete(${i},"${room.room_id}",false)' class='red'>Delete</buton></td>
+				</tr>`;
+					};
+					tableHtml +=
+`				</tbody>`
+					_el('rooms_table').innerHTML = tableHtml;
+				})
+				.catch((errorText) => {
+					alert(`Error getting a list of rooms: ${errorText}`);
+				});
+			}
+			function roomGetMembers(i, room_id) {
+				const homeserver = _val('homeserver');
+				const access_token = _val('access_token');
+				fetch(`${homeserver}/_synapse/admin/v1/rooms/${room_id}/members`, {
+					method: 'GET',
+					headers: { 'Authorization': `Bearer ${access_token}` }
+				})
+				.then((response) => {
+					if (!response.ok)
+						throw new Error(`${response.status} ${response.statusText}`);
+					return response.json();
+				})
+				.then((data) => {
+					if (data.total > 0) {
+						let membersHtml = '<ul>';
+						for (member of data.members) {
+							membersHtml += `<li>${member}</li>`;
+						}
+						membersHtml += '</ul>';
+						_el(`room_members_${i}`).innerHTML = membersHtml;
+					} else {
+						_el(`room_members_${i}`).innerText = 'Room is empty';
+					}
+				})
+				.catch((errorText) => {
+					alert(`Error getting a list of members for room ${room_id}: ${errorText}`);
+				});
+			}
+			function roomDelete(i, room_id, force) {
+				const homeserver = _val('homeserver');
+				const access_token = _val('access_token');
+				_el(`room_delete_state_${i}`).innerText = 'Deleting...';
+				fetch(`${homeserver}/_synapse/admin/v1/rooms/${room_id}`, {
+					method: 'DELETE',
+					headers: {
+						'Authorization': `Bearer ${access_token}`,
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						'purge': true,
+						'force_purge': (force === true)
+					})
+				})
+				.then((response) => {
+					if (!response.ok)
+						throw new Error(`${response.status} ${response.statusText}`);
+					_el(`room_delete_state_${i}`).innerText = 'Deleted';
+					alert(`Room ${room_id} successfully deleted.`);
+				})
+				.catch((errorText) => {
+					if (force) {
+						alert(`Error deleting room ${room_id}: ${errorText}.`);
+						_el(`room_delete_state_${i}`).innerText = 'Error';
+					} else {
+						alert(`Error deleting room ${room_id}: ${errorText}. You can try to force purge the room.`);
+						_el(`room_delete_state_${i}`).innerHtml = `<button id='room_delete_${i}' onclick='roomDelete(${i},"${room.room_id}",true)' class='red'>Force Purge</buton>`;
+					}
+				});
+			}
+		</script>
+		<style>
+			:root {
+				--light: rgb(255, 255, 255);
+				--medium: rgb(165, 165, 165);
+				--dark: rgb(28, 28, 28);
+				--red: rgb(213, 25, 40);
+				--blue: rgb(5, 100, 220);
+			}
+			html {
+				font-family: Verdana,sans-serif;
+				background-color: var(--light);
+				color: var(--dark);
+				font-size: 15px;
+				font-family: "Inter","Arial","Helvetica",sans-serif;
+			}
+			body {
+				margin: 8px;
+				padding: 0;
+			}
+			h1 {
+				font-size: 24px;
+				font-weight: 600;
+				margin: 4px 0;
+			}
+			h2 {
+				font-size: 15px;
+				font-weight: 600;
+				margin: 24px 0 4px 0;
+			}
+			.text {
+				min-height: 40px;
+				margin: 2px 0;
+			}
+			a, a:visited {
+				color: var(--blue);
+				text-decoration: none;
+				margin-right: 16px;
+			}
+			a:after {
+				content: " ⭧";
+			}
+			label {
+				display: inline-block;
+				min-width: 180px;
+				margin: 4px 0;
+			}
+			input {
+				min-width: 150px;
+				padding: 8px 9px;
+				border: 1px solid var(--medium);
+				border-radius: 8px;
+				margin: 2px 0;
+				font-size: 15px;
+				font-family: "Inter","Arial","Helvetica",sans-serif;
+			}
+			input:focus {
+				border: 1px solid var(--dark);
+			}
+			button {
+				background-color: var(--dark);
+				color: var(--light);
+				font-size: 15px;
+				font-weight: 600;
+				font-family: "Inter","Arial","Helvetica",sans-serif;
+				border: 0;
+				/*border: 1px solid rgb(27, 29, 34);*/
+				border-radius: 24px;
+				padding: 7px 18px;
+				min-width: 80px;
+				margin: 4px 2px 4px 0;
+			}
+			button:disabled {
+				background-color: var(--medium);
+			}
+			.red {
+				background-color: var(--red);
+			}
+			.table-div {
+				width: calc(100vw - 16px);
+				border-radius: 8px;
+				overflow-x: scroll;
+			}
+			table {
+				border-collapse: collapse;
+			}
+			tr {
+				height: 48px;
+			}
+			thead tr, tr:nth-child(even) {
+				background-color: rgb(240, 240, 240);
+			}
+			thead th {
+				padding: 4px;
+				text-align: left;
+			}
+			td {
+				padding: 4px;
+				white-space: nowrap;
+			}
+			.centered {
+				text-align: center;
+			}
+			ul {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+			main {
+				margin-bottom: 36px;
+			}
+			footer {
+				position: fixed;
+				left: 0;
+				bottom: 0;
+				height: 20px;
+				margin: 0;
+				padding: 8px;
+				width: 100%;
+				background-color: var(--light);
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Synapse Room Cleaner</h1>
+		</header>
+		<main>
+			<h2>Credentials</h2>
+			<div class='text'>
+				<div>
+					<a href='https://matrix-org.github.io/synapse/latest/usage/administration/admin_api/index.html#authenticate-as-a-server-admin' target='_blank'>How to get an access token</a>
+				</div>
+				<div>
+					Credentials can be saved to your browser's local storage.
+				</div>
+			</div>
+			<div>
+				<label for='homeserver'>Homeserver URL</label>
+				<input id='homeserver' type='text' value=''>
+			</div>
+			<div>
+				<label for='access_token'>Access token</label>
+				<input id='access_token' type='password' value=''>
+			</div>
+			<div>
+				<button onclick='credentialsSave()'>Save</button>
+				<button onclick='credentialsClear()' class='red'>Clear</button>
+			</div>
+			<h2>Rooms</h2>
+			<div>
+				<label for='search_term'>Search by name (optional)</label>
+				<input id='search_term' type='text'>
+			</div>
+			<div>
+				<button onclick='roomsList(0)'>List Rooms</button>
+				<span id='rooms_total'></span>
+			</div>
+			<div>
+			</div>
+			<div class='table-div'>
+				<table id='rooms_table'></table>
+			</div>
+			<div>
+				<button id='rooms_prev' onclick='roomsList(0)' disabled='true' style='display: none;'>Prev</button> <button id='rooms_next' onclick='roomsList(0)' disabled='true' style='display: none;'>Next</button>
+			</div>
+		</main>
+		<footer>
+			<div>
+				(C) 2024 MIT <a href='https://yaky.dev' target='_blank'>Anton Yaky</a>
+				<a href='https://github.com/yaky-dev/synapse-room-cleaner' target='_blank'>Source code on GitHub</a>
+			</div>
+		</footer>
+	</body>
+</html>
